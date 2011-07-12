@@ -139,18 +139,18 @@ class Curl < Command # :nodoc:
         end
         
         output = []
-        output.push("Time: #.2f" %recent.timestamp)
-        output.push("Users: #{recent.volume}")
-        output.push("Hits/sec: %.2f" % hits_per_second)
-        output.push("Bytes/sec: %.2f" % bytes_per_second)
-
+        output << "Secs: %u" %recent.timestamp
+        output << "Users: #{recent.volume}"
+        output << "Hits/sec: %.2f" % hits_per_second
+        output << "Bytes/sec: %.2f" % bytes_per_second
+        
         duration = recent.duration * 1000
         if duration >= 0
-          output.push("Response Time: %u ms" % duration)
+          output << "Response Time (ms): %u" % duration
         end
         
-        output.push("Errors: #{recent.errors}")
-        output.push("Timeouts: #{recent.timeouts}")
+        output << "Errors: #{recent.errors}"
+        output << "Timeouts: #{recent.timeouts}"
 
         if recent.volume > 0
             $stdout.print output.join(', ')
