@@ -107,12 +107,17 @@ class Curl < Command # :nodoc:
                 trap(s) { continue = false }
             end
             job = ::Blitz::Curl::Rush.queue args
+            border = "+-----------+----------+----------+------------+--------------+--------+----------+\n"
             msg "rushing from #{job.region}..."
+            msg border
+            msg "|  time (s) |    users | hits/sec | kbytes/sec | latency (ms) | errors | timeouts |\n"
+            msg border
             job.result do |result|
                 print_rush_result result
                 sleep 1.0 if not continue
                 continue
             end
+            msg border
             puts
             msg "[aborted]" if not continue
         rescue ::Blitz::Curl::Error::Authorize => e
@@ -126,34 +131,35 @@ class Curl < Command # :nodoc:
     
     def print_rush_result result
         recent = result.timeline[-1]
-        bytes_per_second = 0
+        kilobytes_per_second = 0
         hits_per_second = 0
         if result.timeline.size > 1
             last = result.timeline[-2]
             elapsed = recent.timestamp - last.timestamp
             hits_per_second = ( recent.hits - last.hits ) / ( recent.timestamp - last.timestamp )
-            bytes_per_second = ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed
+            kilobytes_per_second = ( ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed ) / 1024
         else
             hits_per_second = recent.hits/recent.timestamp
-            bytes_per_second = ( recent.rxbytes + recent.txbytes )/recent.timestamp
+            kilobytes_per_second = ( ( recent.rxbytes + recent.txbytes )/recent.timestamp ) / 1024
         end
         
-        output = []
-        output << "Secs: %u" %recent.timestamp
-        output << "Users: #{recent.volume}"
-        output << "Hits/sec: %.2f" % hits_per_second
-        output << "Bytes/sec: %.2f" % bytes_per_second
+        output = ['']
+        output << "%10u " % recent.timestamp
+        output << "%9u " % recent.volume
+        output << "%9u " % hits_per_second
+        output << "%11u " % kilobytes_per_second
         
         duration = recent.duration * 1000
         if duration >= 0
-            output << "Response Time (ms): %u" % duration
+            output << "%13u " % duration
         end
         
-        output << "Errors: #{recent.errors}"
-        output << "Timeouts: #{recent.timeouts}"
+        output << "%7u " % recent.errors
+        output << "%9u " % recent.timeouts
+        output << ''
 
         if recent.volume > 0
-            $stdout.print output.join(', ')
+            $stdout.print output.join('|')
             $stdout.print "\n"
         end
         $stdout.flush
