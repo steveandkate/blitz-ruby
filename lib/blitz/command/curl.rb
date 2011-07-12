@@ -126,35 +126,36 @@ class Curl < Command # :nodoc:
     
     def print_rush_result result
         recent = result.timeline[-1]
-        bps = 0
-        hps = 0
+        bytes_per_second = 0
+        hits_per_second = 0
         if result.timeline.size > 1
             last = result.timeline[-2]
             elapsed = recent.timestamp - last.timestamp
-            hps = ( recent.hits - last.hits ) / ( recent.timestamp - last.timestamp )
-            bps = ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed
+            hits_per_second = ( recent.hits - last.hits ) / ( recent.timestamp - last.timestamp )
+            bytes_per_second = ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed
         else
-            hps = recent.hits/recent.timestamp
-            bps = ( recent.rxbytes + recent.txbytes )/recent.timestamp
+            hits_per_second = recent.hits/recent.timestamp
+            bytes_per_second = ( recent.rxbytes + recent.txbytes )/recent.timestamp
         end
-
-	output = []
-	output.push("Users: #{recent.volume}")
-        output.push("Hits/sec: %.2f" % hps)
-        output.push("Bytes/sec: %.2f" % bps)
+        
+        output = []
+        output.push("Time: #.2f" %recent.timestamp)
+        output.push("Users: #{recent.volume}")
+        output.push("Hits/sec: %.2f" % hits_per_second)
+        output.push("Bytes/sec: %.2f" % bytes_per_second)
 
         duration = recent.duration * 1000
-	if duration >= 0
-            output.push("Response Time: %u msecs" % duration)
-	end
-
-	output.push("Errors: #{recent.errors}")
-	output.push("Timeouts: #{recent.timeouts}")
+        if duration >= 0
+          output.push("Response Time: %u ms" % duration)
+        end
+        
+        output.push("Errors: #{recent.errors}")
+        output.push("Timeouts: #{recent.timeouts}")
 
         if recent.volume > 0
             $stdout.print output.join(', ')
+            $stdout.print "\n"
         end
-	$stdout.print "\n"
         $stdout.flush
     end
 
