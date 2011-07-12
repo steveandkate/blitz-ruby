@@ -20,7 +20,7 @@ Jeweler::Tasks.new do |gem|
   gem.license = "MIT"
   gem.summary = %Q{Make load and performance testing a fun sport}
   gem.description = %Q{Make load and performance testing a fun sport}
-  gem.email = "kowsik@gmail.com"
+  gem.email = "support@blitz.io"
   gem.authors = ["pcapr"]
   gem.version = Blitz::Version
   gem.executables = ['blitz']
