@@ -146,7 +146,7 @@ class Curl < Command # :nodoc:
         
         duration = recent.duration * 1000
         if duration >= 0
-          output << "Response Time (ms): %u" % duration
+            output << "Response Time (ms): %u" % duration
         end
         
         output << "Errors: #{recent.errors}"
