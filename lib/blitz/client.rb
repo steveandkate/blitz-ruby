@@ -1,3 +1,5 @@
+require 'json'
+
 class Blitz
 class Client # :nodoc:
     attr_reader :blitz

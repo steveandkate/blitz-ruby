@@ -126,21 +126,35 @@ class Curl < Command # :nodoc:
     
     def print_rush_result result
         recent = result.timeline[-1]
-        hits = "%u hits" % recent.hits
-        errors = recent.errors ? ", %u errors" % recent.errors : ''
-        timeouts = recent.timeouts ? ", %u timeouts" % recent.timeouts : ''
-        bandwidth = ''
+        bps = 0
+        hps = 0
         if result.timeline.size > 1
             last = result.timeline[-2]
             elapsed = recent.timestamp - last.timestamp
-            bps = (recent.rxbytes + recent.txbytes) - (last.rxbytes + last.txbytes)/elapsed
-            bandwidth = " - %.2f bytes/sec" % bps
+            hps = ( recent.hits - last.hits ) / ( recent.timestamp - last.timestamp )
+            bps = ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed
         else
-            bps = (recent.rxbytes + recent.txbytes)/recent.timestamp
-            bandwidth = " - %.2f bytes/sec" % bps
+            hps = recent.hits/recent.timestamp
+            bps = ( recent.rxbytes + recent.txbytes )/recent.timestamp
         end
-        duration = recent.duration >= 0 ? " @ %.2f sec" % recent.duration : ''
-        $stdout.print "#{hits}#{errors}#{timeouts}#{bandwidth}#{duration}\n"
+
+	output = []
+	output.push("Users: #{recent.volume}")
+        output.push("Hits/sec: %.2f" % hps)
+        output.push("Bytes/sec: %.2f" % bps)
+
+        duration = recent.duration * 1000
+	if duration >= 0
+            output.push("Response Time: %u msecs" % duration)
+	end
+
+	output.push("Errors: #{recent.errors}")
+	output.push("Timeouts: #{recent.timeouts}")
+
+        if recent.volume > 0
+            $stdout.print output.join(', ')
+        end
+	$stdout.print "\n"
         $stdout.flush
     end
 
