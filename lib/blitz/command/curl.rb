@@ -299,16 +299,8 @@ class Curl < Command # :nodoc:
                 variable_parameter = shift(k, argv)
 
                 assert_match(/^[a-zA-Z][a-zA-Z0-9]*$/, variable_name, "variable name must be alphanumeric: #{variable_name}")
-                # make sure variable_parameter is in one of these correct forms:
-                # short           long                desc
-                # n[min,max]      number[min,max]     Generate a random number between min and max
-                # a[min,max]      alpha[min,max]      Generate a string between min and max length long
-                # [a,b,c,1,2,3]   list[a,b,c,1,2,3]   Generate one of the comma-separated values
-                # u               udid                Generate a random 40 character iPhone® unique identifier
 
-                if defined?hash['variables'] == false
-                    hash['variables'] = Hash.new
-                end
+                hash['variables'] ||= Hash.new
 
                 parameter_hash = {}
                 if variable_parameter.match(/^(list)?\[([^\]]+)\]$/)
