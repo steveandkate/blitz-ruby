@@ -306,7 +306,6 @@ class Curl < Command # :nodoc:
                 if variable_parameter.match(/^(list)?\[([^\]]+)\]$/)
                     parameter_hash['type'] = 'list'
                     parameter_hash['entries'] = $2.split(',')
-                    p $2
                 elsif variable_parameter.match(/^(a|alpha)$/) 
                     parameter_hash['type'] = 'alpha'
                 elsif variable_parameter.match(/^(a|alpha)\[(\d+)(,(\d+)(,(\d+))?)?\]$/)
