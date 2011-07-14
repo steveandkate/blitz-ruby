@@ -294,7 +294,7 @@ class Curl < Command # :nodoc:
                 next
             end
             
-            if /-v:(\S+)/ =~ k or /--variable:(^\S+)/ =~ k 
+            if /-v:(\S+)/ =~ k or /--variable:(\S+)/ =~ k 
                 variable_name = $1
                 variable_parameter = shift(k, argv)
 
