@@ -152,6 +152,8 @@ class Curl < Command # :nodoc:
         duration = recent.duration * 1000
         if duration >= 0
             output << "%13u " % duration
+        else
+            output << "%13s " % 'no data'
         end
         
         output << "%7u " % recent.errors
@@ -180,7 +182,8 @@ class Curl < Command # :nodoc:
             { :short => '-T', :long => '--timeout', :value => '<ms>', :help => 'Wait time for both connect and responses' },
             { :short => '-u', :long => '--user', :value => '<user[:pass]>', :help => 'User and password for authentication' },
             { :short => '-X', :long => '--request', :value => '<string>', :help => 'Request method to use (GET, HEAD, PUT, etc.)' },
-            { :short => '-v', :long => '--verbose', :value => '', :help => 'Print the request/response headers' },
+            { :short => '-v', :long => '--variable', :value => '<string>', :help => 'Define a variable to use' },
+            { :short => '-V', :long => '--verbose', :value => '', :help => 'Print the request/response headers' },
             { :short => '-1', :long => '--tlsv1', :value => '', :help => 'Use TLSv1 (SSL)' },
             { :short => '-2', :long => '--sslv2', :value => '', :help => 'Use SSLv2 (SSL)' },
             { :short => '-3', :long => '--sslv3', :value => '', :help => 'Use SSLv3 (SSL)' }
@@ -199,6 +202,8 @@ class Curl < Command # :nodoc:
 
     def parse_cli argv
         hash = Hash.new
+        hash['text'] = argv.join(' ')
+
         while not argv.empty?
             break if argv.first[0,1] != '-'
 
@@ -289,7 +294,52 @@ class Curl < Command # :nodoc:
                 next
             end
             
-            if [ '-v', '--verbose' ].member? k
+            if /-v:(\S+)/ =~ k or /--variable:(^\S+)/ =~ k 
+                variable_name = $1
+                variable_parameter = shift(k, argv)
+
+                assert_match(/^[a-zA-Z][a-zA-Z0-9]*$/, variable_name, "variable name must be alphanumeric: #{variable_name}")
+                # make sure variable_parameter is in one of these correct forms:
+                # short           long                desc
+                # n[min,max]      number[min,max]     Generate a random number between min and max
+                # a[min,max]      alpha[min,max]      Generate a string between min and max length long
+                # [a,b,c,1,2,3]   list[a,b,c,1,2,3]   Generate one of the comma-separated values
+                # u               udid                Generate a random 40 character iPhone® unique identifier
+
+                if defined?hash['variables'] == false
+                    hash['variables'] = Hash.new
+                end
+
+                parameter_hash = {}
+                if variable_parameter.match(/^(list)?\[([^\]]+)\]$/)
+                    parameter_hash['type'] = 'list'
+                    parameter_hash['entries'] = $2.split(',')
+                    p $2
+                elsif variable_parameter.match(/^(a|alpha)$/) 
+                    parameter_hash['type'] = 'alpha'
+                elsif variable_parameter.match(/^(a|alpha)\[(\d+)(,(\d+)(,(\d+))?)?\]$/)
+                    parameter_hash['type'] = 'alpha'
+                    parameter_hash['min'] = $2.to_i
+                    parameter_hash['max'] = $3.to_i
+                    parameter_hash['count'] = $4 ? $4 : 1000
+                elsif variable_parameter.match(/^(n|number)$/)
+                    parameter_hash['type'] = 'number'
+                elsif variable_parameter.match(/^(n|number)\[(-?\d+),(-?\d+)(,(\d+))?\]$/)
+                    parameter_hash['type'] = 'number'
+                    parameter_hash['min'] = $2.to_i
+                    parameter_hash['max'] = $3.to_i
+                    parameter_hash['count'] = $4 ? $4.to_i : 1000
+                elsif variable_parameter.match(/^(u|udid)$/)
+                    parameter_hash['type'] = 'udid'
+                else
+                    raise ArgumentError, "Invalid variable parameter to #{variable_name}: #{variable_parameter}"
+                end
+
+                hash['variables'][variable_name] = parameter_hash
+                next
+            end
+
+            if [ '-V', '--verbose' ].member? k
                 hash['verbose'] = true
                 next
             end
