@@ -308,7 +308,7 @@ class Curl < Command # :nodoc:
                     parameter_hash['entries'] = $2.split(',')
                 elsif variable_parameter.match(/^(a|alpha)$/) 
                     parameter_hash['type'] = 'alpha'
-                elsif variable_parameter.match(/^(a|alpha)\[(\d+)(,(\d+)(,(\d+))?)?\]$/)
+                elsif variable_parameter.match(/^(a|alpha)\[(\d+),(\d+)(,(\d+))??\]$/)
                     parameter_hash['type'] = 'alpha'
                     parameter_hash['min'] = $2.to_i
                     parameter_hash['max'] = $3.to_i
