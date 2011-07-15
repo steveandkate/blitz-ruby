@@ -312,14 +312,15 @@ class Curl < Command # :nodoc:
                     parameter_hash['type'] = 'alpha'
                     parameter_hash['min'] = $2.to_i
                     parameter_hash['max'] = $3.to_i
-                    parameter_hash['count'] = $4 ? $4 : 1000
+                    parameter_hash['count'] = $5 ? $5.to_i : 1000
                 elsif variable_parameter.match(/^(n|number)$/)
                     parameter_hash['type'] = 'number'
                 elsif variable_parameter.match(/^(n|number)\[(-?\d+),(-?\d+)(,(\d+))?\]$/)
                     parameter_hash['type'] = 'number'
                     parameter_hash['min'] = $2.to_i
                     parameter_hash['max'] = $3.to_i
-                    parameter_hash['count'] = $4 ? $4.to_i : 1000
+                    p $4
+                    parameter_hash['count'] = $5 ? $5.to_i : 1000
                 elsif variable_parameter.match(/^(u|udid)$/)
                     parameter_hash['type'] = 'udid'
                 else
