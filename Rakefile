@@ -39,6 +39,13 @@ Rake::TestTask.new(:test) do |test|
   test.verbose = true
 end
 
+desc "Run all the specs"
+task :spec do
+    require 'rspec/core'
+    require 'blitz'
+    RSpec::Core::Runner.run [ *Dir.glob('spec/**/*.rb') ]
+end
+
 task :default => :test
 
 require 'rake/rdoctask'
