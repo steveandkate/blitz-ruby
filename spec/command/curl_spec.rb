@@ -72,16 +72,15 @@ describe "arg parsing" do
             test_name = /--(.*)/.match(test[:long])[1]
             describe "#{test_name}" do
                 [ :short, :long ].each do |flag|
-                    *argv = []
+                    argv = []
                     argv << test[flag]
                     argv << test[:params] if test[:params]
                     argv << "#{TEST_URL}"
                     it "#{test[flag]} should not raise an error and populate the hash properly" do
-                        lambda { curl.__send__ :parse_cli, argv }.should_not raise_error
+                        lambda { curl.__send__ :parse_cli, argv.dup }.should_not raise_error
                         parsed_args = curl.__send__ :parse_cli, argv
                         if test[:blitz_key]
-                            bk = test[:blitz_key]
-                            parsed_args[bk].should == test[:params]
+                            parsed_args[ test[:blitz_key] ].should == test[:params]
                         end
                     end
                 end
