@@ -355,7 +355,9 @@ class Curl < Command # :nodoc:
 
         if not hash['help']
             url = argv.shift
-            assert_not_nil(url, 'no URL specified!')
+            if not url
+                raise ArgumentError, "no URL specified!"
+            end
             hash['url'] = url
         end
         

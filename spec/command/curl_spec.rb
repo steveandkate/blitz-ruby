@@ -5,46 +5,20 @@ describe "command args" do
     TEST_VAR_URL = 'http://foo.com?var=#{foo}'
     MIN = 10
     MAX = 30
+    # because of 1.8.7 and 1.9.2 differences, maintain both LIST and LIST_AS_STRING constants
+    LIST = [ 'a', 'b', 'c', '1', '2', '3']
+    LIST_AS_STRING = "[a,b,c,1,2,3]" 
     COUNT = 60
     COUNT_DEFAULT = 1000
     DURATION = 100
     REGION = 'california'
-
-    before :each do
-    end
-    
-    after :each do
-    end
-
-=begin
-    
-    Usage: blitz curl <options> <url>
-
-    --user-agent  -A <string>      User-Agent to send to server
-    --cookie      -b name=<string> Cookie to send to the server (multiple)
-    --data        -d <string>      Data to send in a PUT or POST request
-    --dump-header -D <file>        Print the request/response headers
-    --referer     -e <string>      Referer URL
-    --help        -h               Help on command line options
-    --header      -H <string>      Custom header to pass to server
-    --pattern     -p <s>-<e>:<d>   Ramp from s to e concurrent requests in d secs
-    --region      -r <string>      california|virginia|singapore|ireland|japan
-    --status      -s <number>      Assert on the HTTP response status code
-    --timeout     -T <ms>          Wait time for both connect and responses
-    --user        -u <user[:pass]> User and password for authentication
-    --request     -X <string>      Request method to use (GET, HEAD, PUT, etc.)
-    --variable    -v <string>      Define a variable to use
-    --verbose     -V               Print the request/response headers
-    --tlsv1       -1               Use TLSv1 (SSL)
-    --sslv2       -2               Use SSLv2 (SSL)
-    --sslv3       -3               Use SSLv3 (SSL)
-=end
 
     describe "curl command argument parsing" do    
 
         curl = ::Blitz::Command::Curl.new
 
         describe "basic command arg requirements" do
+
             @args = { 
                 "expanded parameters" => [ '--pattern', '1-250:60', "--region", "#{REGION}", "#{TEST_URL}" ],
                 "short parameters"    => [ '-p', '1-250:60', "--region", "#{REGION}", "#{TEST_URL}" ]
@@ -89,6 +63,30 @@ describe "command args" do
                     parsed_args = curl.__send__ :parse_cli, argv
                     parsed_args.should be_a(Hash)
                     parsed_args['help'].should be_true
+                end
+            end
+        end
+
+        describe "Usage errors" do
+            describe "no arguments" do
+                it "should throw an error when no arguments are given" do
+                    lambda { curl.__send__ :parse_cli }.should raise_error(ArgumentError, /wrong number of arg/)
+                end
+            end
+            describe "no URL" do
+                @args = { 
+                    "expanded parameters" => [ '--pattern', '1-250:60', "--variable:#{VAR}", "udid", "--region", "#{REGION}" ],
+                    "short parameters" => [ '-p', '1-250:60', "-v:#{VAR}", "u", "-r", "#{REGION}" ]
+                }
+                @args.each do |name, argv|
+                    it "should throw an error when no URL is given for #{name}" do
+                        lambda { curl.__send__ :parse_cli, argv}.should raise_error(ArgumentError, /URL/)
+                    end
+                end
+            end
+            describe "bad arguments" do
+                it "should throw an error when bad arguments are passed" do
+                    pending "Have not written the unhappy path test cases yet"
                 end
             end
         end
@@ -157,6 +155,22 @@ describe "command args" do
                 end
             end
 
+            describe "list parameter" do
+                @args = { 
+                    "expanded parameters" => [ '--pattern', '1-250:60', "--variable:#{VAR}", "list#{LIST_AS_STRING}", "--region", "#{REGION}", "#{TEST_URL}" ],
+                    "short parameters" => [ '-p', '1-250:60', "-v:#{VAR}", "#{LIST_AS_STRING}", "-r", "#{REGION}", "#{TEST_URL}" ]
+                }
+                @args.each do |name, argv|
+                    it "should allow lists to be sent as a variable type for #{name}" do
+                        parsed_args = curl.__send__ :parse_cli, argv
+                        parsed_args['variables'][VAR].should be_a(Hash)
+                        parsed_args['variables'][VAR]['type'].should == 'list'
+                        parsed_args['variables'][VAR]['entries'].should be_an(Array)
+                        parsed_args['variables'][VAR]['entries'].should == LIST
+                    end
+                end
+            end
+
             describe "udid parameter" do
                 @args = { 
                     "expanded parameters" => [ '--pattern', '1-250:60', "--variable:#{VAR}", "udid", "--region", "#{REGION}", "#{TEST_URL}" ],
@@ -168,12 +182,6 @@ describe "command args" do
                         parsed_args['variables'][VAR].should be_a(Hash)
                         parsed_args['variables'][VAR]['type'].should == 'udid'
                     end
-                end
-            end
-
-            describe "bad variables" do
-                it "should not allow improperly formatted variables to be passed to curl" do
-                    pending "Have not written the unhappy path test cases yet"
                 end
             end
         end
