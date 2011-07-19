@@ -346,7 +346,7 @@ class Curl < Command # :nodoc:
             end
 
             if [ '-3', '--sslv3' ].member? k
-                hash['ssl'] = 'sslv2'
+                hash['ssl'] = 'sslv3'
                 next
             end
 
