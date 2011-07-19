@@ -13,7 +13,6 @@ describe "arg parsing" do
     DURATION = 100
     REGION = 'california'
 
-
     curl = ::Blitz::Command::Curl.new
     describe "basic args" do
 
