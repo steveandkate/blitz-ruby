@@ -52,14 +52,14 @@ describe "arg parsing" do
         end
 
         @command_args = [ 
-            { :short => '-A', :long => '--user-agent', :params => '"TEST STRING"', :blitz_key => 'user-agent' },
+            { :short => '-A', :long => '--user-agent', :params => '"TEST STRING"' },
             { :short => '-b', :long => '--cookie', :params => 'name=somecookie' }, 
             { :short => '-d', :long => '--data', :params => '"data for post"'}, 
-            { :short => '-D', :long => '--dump-header', :params => '"somefile.out"' }, 
-            { :short => '-e', :long => '--referer', :params => '"http://google.com"' }, 
+            { :short => '-D', :long => '--dump-header', :params => '"somefile.out"' },
+            { :short => '-e', :long => '--referer', :params => '"http://google.com"' },
             { :short => '-H', :long => '--header', :params => 'some_header' }, 
-            { :short => '-s', :long => '--status', :params => '500' }, 
-            { :short => '-T', :long => '--timeout', :params => '750' }, 
+            { :short => '-s', :long => '--status', :params => '500', :return_type => Integer },
+            { :short => '-T', :long => '--timeout', :params => '750', :return_type => Integer }, 
             { :short => '-u', :long => '--user', :params => 'foo:bar' }, 
             { :short => '-X', :long => '--request', :params => 'GET' }, 
             { :short => '-V', :long => '--verbose' }, 
@@ -78,8 +78,24 @@ describe "arg parsing" do
                     it "#{test[flag]} should not raise an error and populate the hash properly" do
                         lambda { curl.__send__ :parse_cli, argv.dup }.should_not raise_error
                         parsed_args = curl.__send__ :parse_cli, argv
-                        if test[:blitz_key]
-                            parsed_args[ test[:blitz_key] ].should == test[:params]
+                        # special checks for cookies and headers, as their structure in the return data is different
+                        if test_name == 'cookie' || test_name == 'header'
+                            return_key = "#{test_name}s"
+                            parsed_args[return_key].should be_an(Array)
+                            parsed_args[return_key][0].should == test[:params]
+                        # special checks for data, as its structure in the return data is different
+                        elsif test_name == 'data'
+                            parsed_args['content'].should be_a(Hash)
+                            parsed_args['content']['data'].should be_an(Array)
+                            parsed_args['content']['data'][0].should == test[:params]
+                        # special checks for ssl params
+                        elsif test_name.match(/^ssl|tls/)
+                            parsed_args['ssl'].should == test_name
+                        # for integer params, make sure the test returns correct quoting
+                        elsif test[:return_type] == Integer
+                            parsed_args[test_name].should == test[:params].to_i
+                        elsif test[:params].is_a?(String)
+                            parsed_args[test_name].should == test[:params]
                         end
                     end
                 end
