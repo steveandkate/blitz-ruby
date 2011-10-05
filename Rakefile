@@ -46,7 +46,7 @@ task :spec do
     RSpec::Core::Runner.run [ *Dir.glob('spec/**/*.rb') ]
 end
 
-task :default => :test
+task :default => :spec
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|

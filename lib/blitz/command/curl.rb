@@ -30,6 +30,18 @@ class Curl < Command # :nodoc:
         error ""
         error "#{base_url}/#{e.uuid}"
         error ""
+        if e.checks
+            error "We tried checking the following URLs and got this"
+            error ""
+            e.checks.each do |check|
+                bytes = ''
+                if check['bytes']
+                    bytes = '| ' + check['bytes']
+                end
+                error "#{check['code']} | #{check['url']} #{bytes}"
+            end
+            error ''
+        end
         error "If your app is RESTfully built with sinatra or rails, simply add this route:"
         error ""
         error "get '/#{e.uuid}' do"
@@ -109,10 +121,14 @@ class Curl < Command # :nodoc:
             job = ::Blitz::Curl::Rush.queue args
             border = "+-----------+----------+----------+------------+--------------+--------+----------+\n"
             msg "rushing from #{job.region}..."
-            msg border
-            msg "|  time (s) |    users | hits/sec | kbytes/sec | latency (ms) | errors | timeouts |\n"
-            msg border
+            header = true
             job.result do |result|
+                if header
+                    header = nil
+                    msg border
+                    msg "|  time (s) |    users | hits/sec | kbytes/sec | latency (ms) | errors | timeouts |\n"
+                    msg border
+                end
                 print_rush_result result
                 sleep 1.0 if not continue
                 continue

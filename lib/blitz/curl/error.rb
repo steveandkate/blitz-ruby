@@ -18,12 +18,16 @@ class Error < StandardError # :nodoc:
         
         # The unique ID to use a URL path in your app for authorization to succeed
         attr_reader :uuid
+        
+        # The set of checks performed if the app was reachable
+        attr_reader :checks
 
         def initialize json
             @scheme = json['scheme']
             @host   = json['host']
             @port   = json['port']
             @uuid   = json['uuid']
+            @checks = json['checks']
             super
         end
     end
