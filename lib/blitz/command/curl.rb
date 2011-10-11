@@ -66,7 +66,7 @@ class Curl < Command # :nodoc:
             puts
             print_sprint_result args, e
         rescue ::Blitz::Curl::Error::Region => e
-            error = "#{yellow(e.region)}: #{red(e.message)}"
+            error "#{yellow(e.region)}: #{red(e.message)}"
         rescue ::Blitz::Curl::Error => e
             error red(e.message)
         end
