@@ -47,21 +47,38 @@ class Error < StandardError # :nodoc:
     class DNS < Region
     end
     
-    # This exception is raised when the connection to your app fails
-    class Connect < Region
-    end
-    
-    # This exception is raised when the connection or the response times out
-    class Timeout < Region
-    end
-
     # This exception is raised when the arguments to sprint or rush is invalid
     class Parse < Region
     end
     
+    # This exception is raised when a particular step fails in some ways
+    class Step < Region
+        # The step index where the error occurred
+        attr_reader :step
+        
+        # An array of Blitz::Curl::Sprint::Step objects each containing requests
+        # and [potentially] responses. Depending on which step of the transaction
+        # the failure was, this array could potentially be empty
+        attr_reader :steps
+        
+        def initialize json # :nodoc:
+            @step = json['step']
+            @steps = json['steps'].map { |s| Sprint::Step.new s }
+            super
+        end
+    end
+    
+    # This exception is raised when the connection to your app fails
+    class Connect < Step
+    end
+    
+    # This exception is raised when the connection or the response times out
+    class Timeout < Step
+    end
+
     # This exception is raised when you have an explicit status code check and
     # the assertion fails
-    class Status < Region
+    class Status < Step
     end
 end
 end # Curl

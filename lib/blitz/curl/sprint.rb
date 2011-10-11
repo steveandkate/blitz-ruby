@@ -58,16 +58,15 @@ class Sprint
         end        
     end
     
-    # Contains the result from a successful sprint
-    class Result
-        # The region from which this sprint was executed
-        attr_reader :region
-        
-        # The overall response time for the successful hit
-        attr_reader :duration
-        
+    # Represents a step in the transaction (even if there's only one). Each
+    # step contains the request and response objects as well as the stats
+    # associated with them.
+    class Step
         # The time it took for the TCP connection
         attr_reader :connect
+        
+        # The time it took for this step (includes the connect, send and receive)
+        attr_reader :duration
         
         # The request object containing the URL, headers and content, if any
         attr_reader :request
@@ -76,12 +75,29 @@ class Sprint
         attr_reader :response
         
         def initialize json # :nodoc:
+            @connect = json['connect']
+            @duration = json['duration']
+            @request = Request.new json['request'] if json['request']
+            @response = Response.new json['response'] if json['response']
+        end
+    end
+    
+    # Contains the result from a successful sprint
+    class Result
+        # The region from which this sprint was executed
+        attr_reader :region
+        
+        # The overall response time for the entire transaction
+        attr_reader :duration
+        
+        # Stats about the individual steps
+        attr_reader :steps
+        
+        def initialize json # :nodoc:
             result = json['result']
             @region = result['region']
             @duration = result['duration']
-            @connect = result['connect']
-            @request = Request.new result['request']
-            @response = Response.new result['response']
+            @steps = result['steps'].map { |step| Step.new step }
         end        
     end
     
@@ -139,7 +155,7 @@ class Sprint
                     raise Error::Timeout.new(result)
                 elsif error == 'parse'
                     raise Error::Parse.new(result)
-                elsif result['assert'] == 0
+                elsif error == 'assert'
                     raise Error::Status.new(result)
                 else
                     raise Error

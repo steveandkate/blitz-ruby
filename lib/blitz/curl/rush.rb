@@ -4,6 +4,32 @@ module Curl # :nodoc:
 # include the entire timeline containing the average duration, the concurrency,
 # the bytes sent/received, etc.
 class Rush
+    # Per-step (for transactional rushes) metrics of a rush at time[i]
+    class Step
+        # The duration of this step, when successful
+        attr_reader :duration
+        
+        # Average TCP connect times for this step
+        attr_reader :connect
+        
+        # Cummulative errors for this step
+        attr_reader :errors
+        
+        # Cummulative timeouts for this step
+        attr_reader :timeouts
+        
+        # Cummulative assertion failures on status code for this step
+        attr_reader :asserts
+        
+        def initialize json
+            @duration = json['d']
+            @connect = json['c']
+            @errors = json['e']
+            @timeouts = json['t']
+            @asserts = json['a']
+        end
+    end
+    
     # Snapshot of a rush at time[i] containing information about hits, errors
     # timeouts, etc.
     class Point
@@ -34,6 +60,9 @@ class Rush
         # The total number of bytes received
         attr_reader :rxbytes
         
+        # Per-step metric at this point in time
+        attr_reader :steps
+        
         def initialize json # :nodoc:
             @timestamp = json['timestamp']
             @duration = json['duration']
@@ -44,6 +73,7 @@ class Rush
             @volume = json['volume']
             @txbytes = json['txbytes']
             @rxbytes = json['rxbytes']
+            @steps = json['steps'].map { |s| Step.new s }
         end
     end
     
@@ -128,6 +158,8 @@ class Rush
                     raise Error::DNS.new(result)
                 elsif error == 'authorize'
                     raise Error::Authorize.new(result)
+                elsif error == 'parse'
+                    raise Error::Parse.new(result)
                 else
                     raise Error
                 end

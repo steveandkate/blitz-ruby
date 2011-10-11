@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'term/ansicolor'
 require 'couchrest'
 require 'hexy'
 require 'pp'

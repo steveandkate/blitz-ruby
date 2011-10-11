@@ -1,6 +1,8 @@
 class Blitz
 class Command
 class Curl < Command # :nodoc:
+    include Term::ANSIColor
+    
     def cmd_help argv
         help
     end
@@ -38,17 +40,17 @@ class Curl < Command # :nodoc:
                 if check['bytes']
                     bytes = '| ' + check['bytes']
                 end
-                error "#{check['code']} | #{check['url']} #{bytes}"
+                error "#{bold(red(check['code']))} | #{cyan(check['url'])} #{bytes}"
             end
             error ''
         end
         error "If your app is RESTfully built with sinatra or rails, simply add this route:"
         error ""
-        error "get '/#{e.uuid}' do"
+        error "get '/#{cyan(e.uuid)}' do"
         error "    '42'"
         error "end"
         error ""
-        error "Once this is done, you can blitz #{e.host} all you want."
+        error "Once this is done, you can blitz #{cyan(e.host)} all you want."
         puts
     end
 
@@ -59,128 +61,137 @@ class Curl < Command # :nodoc:
             print_sprint_result args, result
         rescue ::Blitz::Curl::Error::Authorize => e
             authorize_error e
+        rescue ::Blitz::Curl::Error::Step => e
+            error "#{yellow(e.region)}: #{red(e.message)} in step #{e.step}"
+            puts
+            print_sprint_result args, e
         rescue ::Blitz::Curl::Error::Region => e
-            error "#{e.region}: #{e.message}"
+            error = "#{yellow(e.region)}: #{red(e.message)}"
         rescue ::Blitz::Curl::Error => e
-            error e.message
+            error red(e.message)
         end
     end
-
-    def print_sprint_result args, result
-        rtt = result.duration
+    
+    def pretty_print_duration duration
+        rtt = duration
 		if rtt < 1.0
 			rtt = (rtt * 1000).floor.to_s + ' ms';
 		else
 			rtt = ("%.2f" % rtt) + ' sec';
 		end
+    end
 
-		puts "-" * 70
-        msg "#{result.region}: Response time of #{rtt}"
-        unless args['dump-header'] or args['verbose']
-            msg "Try --verbose to see the request/response headers"
-        end
-        puts "-" * 70
-        puts
-
-        if args['dump-header'] or args['verbose']
-            puts "> " + result.request.line
-            result.request.headers.each_pair { |k, v| puts "> #{k}: #{v}\r\n" }
+    def print_sprint_result args, result
+        if result.respond_to? :duration
+            rtt = pretty_print_duration result.duration
+            msg "#{yellow(result.region)}: Transaction time #{green(rtt)}"
             puts
+        end
         
-            content = result.request.content
-            if not content.empty?
-                if /^[[:print:]]+$/ =~ content
-                    puts content
-                else
-                    puts Hexy.new(content).to_s
+        result.steps.each do |step|
+            req, res = step.request, step.response
+            if args['dump-header'] or args['verbose']
+                puts "> " + req.line
+                req.headers.each_pair { |k, v| puts "> #{k}: #{v}\r\n" }
+                puts
+
+                content = req.content
+                if not content.empty?
+                    if /^[[:print:]]+$/ =~ content
+                        puts content
+                    else
+                        puts Hexy.new(content).to_s
+                    end
+                    puts
+                end
+
+                puts "< " + res.line
+                res.headers.each_pair { |k, v| puts "< #{k}: #{v}\r\n" }
+                puts
+                content = res.content
+                if not content.empty?
+                    if /^[[:print:]]+$/ =~ content
+                        puts content
+                    else
+                        puts Hexy.new(content).to_s
+                    end
+                end                
+            else
+                puts "> " + req.method + ' ' + req.url
+                if res
+                    text = "< " + res.status.to_s + ' ' + res.message
+                    if step.duration
+                        text << ' in ' + green(pretty_print_duration(step.duration))
+                    end
+                    puts text
                 end
                 puts
-            end
-        
-            puts "< " + result.response.line
-            result.response.headers.each_pair { |k, v| puts "> #{k}: #{v}\r\n" }
-            puts
-        end
-        
-        content = result.response.content
-        if not content.empty?
-            if /^[[:print:]]+$/ =~ content
-                puts content
-            else
-                puts Hexy.new(content).to_s
             end
         end
     end
 
     def rush args
         continue = true
+        last_index = nil
         begin
             [ 'INT', 'STOP', 'HUP' ].each do |s| 
                 trap(s) { continue = false }
             end
             job = ::Blitz::Curl::Rush.queue args
-            border = "+-----------+----------+----------+------------+--------------+--------+----------+\n"
-            msg "rushing from #{job.region}..."
-            header = true
+            msg "rushing from #{yellow(job.region)}..."
+            puts
             job.result do |result|
-                if header
-                    header = nil
-                    msg border
-                    msg "|  time (s) |    users | hits/sec | kbytes/sec | latency (ms) | errors | timeouts |\n"
-                    msg border
+                print_rush_result args, result, last_index
+                if not result.timeline.empty?
+                    last_index = result.timeline.size
                 end
-                print_rush_result result
-                sleep 1.0 if not continue
+                sleep 2.0 if not continue
                 continue
             end
-            msg border
             puts
-            msg "[aborted]" if not continue
+            msg "[#{red('aborted')}]" if not continue
         rescue ::Blitz::Curl::Error::Authorize => e
             authorize_error e
         rescue ::Blitz::Curl::Error::Region => e
-            error "#{e.region}: #{e.message}"
+            error "#{yellow(e.region)}: #{red(e.message)}"
         rescue ::Blitz::Curl::Error => e
-            error e.message
+            error red(e.message)
         end
     end
     
-    def print_rush_result result
-        recent = result.timeline[-1]
-        kilobytes_per_second = 0
-        hits_per_second = 0
-        if result.timeline.size > 1
-            last = result.timeline[-2]
-            elapsed = recent.timestamp - last.timestamp
-            hits_per_second = ( recent.hits - last.hits ) / ( recent.timestamp - last.timestamp )
-            kilobytes_per_second = ( ( recent.rxbytes + recent.txbytes ) - ( last.rxbytes + last.txbytes ) / elapsed ) / 1024
-        else
-            hits_per_second = recent.hits/recent.timestamp
-            kilobytes_per_second = ( ( recent.rxbytes + recent.txbytes )/recent.timestamp ) / 1024
+    def print_rush_result args, result, last_index
+        if last_index.nil?
+            print yellow("%6s " % "Time")
+            print "%6s " % "Users"
+            print green("%8s " % "Hits")
+            print magenta("%8s " % "Timeouts")
+            print red("%8s " % "Errors")
+            print green("%8s " % "Hits/s")
+            print "%s" % "Mbps"
+            puts
         end
         
-        output = ['']
-        output << "%10u " % recent.timestamp
-        output << "%9u " % recent.volume
-        output << "%9u " % hits_per_second
-        output << "%11u " % kilobytes_per_second
-        
-        duration = recent.duration * 1000
-        if duration >= 0
-            output << "%13u " % duration
-        else
-            output << "%13s " % 'no data'
+        if last_index and result.timeline.size == last_index
+            return
         end
         
-        output << "%7u " % recent.errors
-        output << "%9u " % recent.timeouts
-        output << ''
-
-        if recent.volume > 0
-            $stdout.print output.join('|')
-            $stdout.print "\n"
+        last = result.timeline[-2]
+        curr = result.timeline[-1]
+        print yellow("%5.1fs " % curr.timestamp)
+        print "%6d " % curr.volume
+        print green("%8d " % curr.hits)
+        print magenta("%8d " % curr.timeouts)
+        print red("%8d " % curr.errors)
+        
+        if last
+            elapsed = curr.timestamp - last.timestamp
+            mbps = ((curr.txbytes + curr.rxbytes) - (last.txbytes + last.rxbytes))/elapsed/1024.0/1024.0
+            htps = (curr.hits - last.hits)/elapsed
+            print green(" %7.2f " % htps)
+            print "%.2f" % mbps
         end
-        $stdout.flush
+        
+        print "\n"
     end
 
     def help
@@ -217,169 +228,173 @@ class Curl < Command # :nodoc:
     end
 
     def parse_cli argv
-        hash = Hash.new
-        hash['text'] = argv.join(' ')
-
+        hash = { 'steps' => [] }
+        
         while not argv.empty?
-            break if argv.first[0,1] != '-'
+            hash['steps'] << Hash.new
+            step = hash['steps'].last
+            
+            while not argv.empty?
+                break if argv.first[0,1] != '-'
 
-            k = argv.shift
-            if [ '-A', '--user-agent' ].member? k
-                hash['user-agent'] = shift(k, argv)
-                next
-            end
-
-            if [ '-b', '--cookie' ].member? k
-                # TODO: support cookie jars
-                hash['cookies'] ||= []
-                hash['cookies'] << shift(k, argv)
-                next
-            end
-
-            if [ '-d', '--data' ].member? k
-                hash['content'] ||= Hash.new
-                hash['content']['data'] ||= []
-                v = shift(k, argv)
-                v = File.read v[1..-1] if v =~ /^@/
-                hash['content']['data'] << v
-                next
-            end
-
-            if [ '-D', '--dump-header' ].member? k
-                hash['dump-header'] = shift(k, argv)
-                next
-            end
-
-            if [ '-e', '--referer'].member? k
-                hash['referer'] = shift(k, argv)
-                next
-            end
-
-            if [ '-h', '--help' ].member? k
-                hash['help'] = true
-                next
-            end
-
-            if [ '-H', '--header' ].member? k
-                hash['headers'] ||= []
-                hash['headers'].push shift(k, argv)
-                next
-            end
-
-            if [ '-p', '--pattern' ].member? k
-                v = shift(k, argv)
-                if not /^(\d+)-(\d+):(\d+)$/ =~ v
-                    raise Test::Unit::AssertionFailedError, "invalid ramp pattern"
+                k = argv.shift
+                if [ '-A', '--user-agent' ].member? k
+                    step['user-agent'] = shift(k, argv)
+                    next
                 end
-                hash['pattern'] = {
-                    'iterations' => 1,
-                    'intervals' => [{
-                        'iterations' => 1,
-                        'start' => $1.to_i,
-                        'end' => $2.to_i,
-                        'duration' => $3.to_i
-                    }]
-                }
-                next
+
+                if [ '-b', '--cookie' ].member? k
+                    step['cookies'] ||= []
+                    step['cookies'] << shift(k, argv)
+                    next
+                end
+
+                if [ '-d', '--data' ].member? k
+                    step['content'] ||= Hash.new
+                    step['content']['data'] ||= []
+                    v = shift(k, argv)
+                    v = File.read v[1..-1] if v =~ /^@/
+                    step['content']['data'] << v
+                    next
+                end
+
+                if [ '-D', '--dump-header' ].member? k
+                    hash['dump-header'] = shift(k, argv)
+                    next
+                end
+
+                if [ '-e', '--referer'].member? k
+                    step['referer'] = shift(k, argv)
+                    next
+                end
+
+                if [ '-h', '--help' ].member? k
+                    hash['help'] = true
+                    next
+                end
+
+                if [ '-H', '--header' ].member? k
+                    step['headers'] ||= []
+                    step['headers'].push shift(k, argv)
+                    next
+                end
+
+                if [ '-p', '--pattern' ].member? k
+                    v = shift(k, argv)
+                    v.split(',').each do |vt|
+                        unless /^(\d+)-(\d+):(\d+)$/ =~ vt
+                            raise Test::Unit::AssertionFailedError, "invalid ramp pattern"
+                        end
+                        hash['pattern'] ||= { 'iterations' => 1, 'intervals' => [] }
+                        hash['pattern']['intervals'] << {
+                            'iterations' => 1,
+                            'start' => $1.to_i,
+                            'end' => $2.to_i,
+                            'duration' => $3.to_i
+                        }
+                    end
+                    next
+                end
+
+                if [ '-r', '--region' ].member? k
+                    v = shift(k, argv)
+                    assert_match(/^california|virginia|singapore|ireland|japan$/, v, 'region must be one of california, virginia, singapore, japan or ireland')
+                    hash['region'] = v
+                    next
+                end
+
+                if [ '-s', '--status' ].member? k
+                    step['status'] = shift(k, argv).to_i
+                    next
+                end
+
+                if [ '-T', '--timeout' ].member? k
+                    step['timeout'] = shift(k, argv).to_i
+                    next
+                end
+
+                if [ '-u', '--user' ].member? k
+                    step['user'] = shift(k, argv)
+                    next
+                end
+
+                if [ '-X', '--request' ].member? k
+                    step['request'] = shift(k, argv)
+                    next
+                end
+            
+                if /-v:(\S+)/ =~ k or /--variable:(\S+)/ =~ k 
+                    vname = $1
+                    vargs = shift(k, argv)
+
+                    assert_match /^[a-zA-Z][a-zA-Z0-9]*$/, vname, "variable name must be alphanumeric: #{vname}"
+
+                    step['variables'] ||= Hash.new
+                    vhash = step['variables'][vname] = Hash.new
+                    if vargs.match /^(list)?\[([^\]]+)\]$/
+                        vhash['type'] = 'list'
+                        vhash['entries'] = $2.split(',')
+                    elsif vargs.match /^(a|alpha)$/
+                        vhash['type'] = 'alpha'
+                    elsif vargs.match /^(a|alpha)\[(\d+),(\d+)(,(\d+))??\]$/
+                        vhash['type'] = 'alpha'
+                        vhash['min'] = $2.to_i
+                        vhash['max'] = $3.to_i
+                        vhash['count'] = $5 ? $5.to_i : 1000
+                    elsif vargs.match /^(n|number)$/
+                        vhash['type'] = 'number'
+                    elsif vargs.match /^(n|number)\[(-?\d+),(-?\d+)(,(\d+))?\]$/
+                        vhash['type'] = 'number'
+                        vhash['min'] = $2.to_i
+                        vhash['max'] = $3.to_i
+                        vhash['count'] = $5 ? $5.to_i : 1000
+                    elsif vargs.match /^(u|udid)$/
+                        vhash['type'] = 'udid'
+                    else
+                        raise ArgumentError, "Invalid variable args for #{vname}: #{vargs}"
+                    end
+                    next
+                end
+
+                if [ '-V', '--verbose' ].member? k
+                    hash['verbose'] = true
+                    next
+                end
+
+                if [ '-1', '--tlsv1' ].member? k
+                    step['ssl'] = 'tlsv1'
+                    next
+                end
+
+                if [ '-2', '--sslv2' ].member? k
+                    step['ssl'] = 'sslv2'
+                    next
+                end
+
+                if [ '-3', '--sslv3' ].member? k
+                    step['ssl'] = 'sslv3'
+                    next
+                end
+
+                raise ArgumentError, "Unknown option #{k}"
             end
 
-            if [ '-r', '--region' ].member? k
-                v = shift(k, argv)
-                assert_match(/^california|virginia|singapore|ireland|japan$/, v, 'region must be one of california, virginia, singapore, japan or ireland')
-                hash['region'] = v
-                next
-            end
-
-            if [ '-s', '--status' ].member? k
-                hash['status'] = shift(k, argv).to_i
-                next
-            end
-
-            if [ '-T', '--timeout' ].member? k
-                hash['timeout'] = shift(k, argv).to_i
-                next
-            end
-
-            if [ '-u', '--user' ].member? k
-                hash['user'] = shift(k, argv)
-                next
-            end
-
-            if [ '-X', '--request' ].member? k
-                hash['request'] = shift(k, argv)
-                next
+            if step.member? 'content'
+                data_size = step['content']['data'].inject(0) { |m, v| m + v.size }
+                assert(data_size < 10*1024, "POST content must be < 10K")
             end
             
-            if /-v:(\S+)/ =~ k or /--variable:(\S+)/ =~ k 
-                variable_name = $1
-                variable_parameter = shift(k, argv)
-
-                assert_match(/^[a-zA-Z][a-zA-Z0-9]*$/, variable_name, "variable name must be alphanumeric: #{variable_name}")
-
-                hash['variables'] ||= Hash.new
-
-                parameter_hash = {}
-                if variable_parameter.match(/^(list)?\[([^\]]+)\]$/)
-                    parameter_hash['type'] = 'list'
-                    parameter_hash['entries'] = $2.split(',')
-                elsif variable_parameter.match(/^(a|alpha)$/) 
-                    parameter_hash['type'] = 'alpha'
-                elsif variable_parameter.match(/^(a|alpha)\[(\d+),(\d+)(,(\d+))??\]$/)
-                    parameter_hash['type'] = 'alpha'
-                    parameter_hash['min'] = $2.to_i
-                    parameter_hash['max'] = $3.to_i
-                    parameter_hash['count'] = $5 ? $5.to_i : 1000
-                elsif variable_parameter.match(/^(n|number)$/)
-                    parameter_hash['type'] = 'number'
-                elsif variable_parameter.match(/^(n|number)\[(-?\d+),(-?\d+)(,(\d+))?\]$/)
-                    parameter_hash['type'] = 'number'
-                    parameter_hash['min'] = $2.to_i
-                    parameter_hash['max'] = $3.to_i
-                    parameter_hash['count'] = $5 ? $5.to_i : 1000
-                elsif variable_parameter.match(/^(u|udid)$/)
-                    parameter_hash['type'] = 'udid'
-                else
-                    raise ArgumentError, "Invalid variable parameter to #{variable_name}: #{variable_parameter}"
-                end
-
-                hash['variables'][variable_name] = parameter_hash
-                next
-            end
-
-            if [ '-V', '--verbose' ].member? k
-                hash['verbose'] = true
-                next
-            end
-
-            if [ '-1', '--tlsv1' ].member? k
-                hash['ssl'] = 'tlsv1'
-                next
-            end
-
-            if [ '-2', '--sslv2' ].member? k
-                hash['ssl'] = 'sslv2'
-                next
-            end
-
-            if [ '-3', '--sslv3' ].member? k
-                hash['ssl'] = 'sslv3'
-                next
-            end
-
-            raise ArgumentError, "Unknown option #{k}"
-        end
-
-        if not hash['help']
+            break if hash['help']
+            
             url = argv.shift
-            if not url
-                raise ArgumentError, "no URL specified!"
-            end
-            hash['url'] = url
+            raise ArgumentError, "no URL specified!" if not url
+            step['url'] = url
         end
         
-        if hash.member? 'content'
-            data_size = hash['content']['data'].inject(0) { |m, v| m + v.size }
-            assert(data_size < 10*1024, "POST content must be < 10K")
+        if not hash['help']
+            if hash['steps'].empty?
+                raise ArgumentError, "no URL specified!"
+            end
         end
 
         hash
