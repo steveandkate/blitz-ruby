@@ -28,6 +28,7 @@ class Blitz
 class Command # :nodoc:
     include Test::Unit::Assertions
     include Helper
+    include Term::ANSIColor
 end
 end # Blitz
 

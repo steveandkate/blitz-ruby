@@ -121,13 +121,15 @@ class Sprint
 
         res = Command::API.client.curl_execute args
         raise Error.new(res) if res['error']
-        return self.new res['job_id']
+        return self.new res
     end
     
     attr_reader :job_id # :nodoc:
+    attr_reader :region # :nodoc:
     
-    def initialize job_id # :nodoc:
-        @job_id = job_id
+    def initialize json # :nodoc:
+        @job_id = json['job_id']
+        @region = json['region']
     end
     
     def result # :nodoc:

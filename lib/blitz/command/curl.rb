@@ -1,8 +1,6 @@
 class Blitz
 class Command
 class Curl < Command # :nodoc:
-    include Term::ANSIColor
-    
     def cmd_help argv
         help
     end
@@ -57,16 +55,17 @@ class Curl < Command # :nodoc:
     def sprint args
         begin
             job = ::Blitz::Curl::Sprint.queue args
+            error "sprinting from #{yellow(job.region)}"
             result = job.result
             print_sprint_result args, result
         rescue ::Blitz::Curl::Error::Authorize => e
             authorize_error e
         rescue ::Blitz::Curl::Error::Step => e
-            error "#{yellow(e.region)}: #{red(e.message)} in step #{e.step}"
+            error "#{red(e.message)} in step #{e.step}"
             puts
             print_sprint_result args, e
         rescue ::Blitz::Curl::Error::Region => e
-            error "#{yellow(e.region)}: #{red(e.message)}"
+            error "#{red(e.message)}"
         rescue ::Blitz::Curl::Error => e
             error red(e.message)
         end
@@ -84,7 +83,7 @@ class Curl < Command # :nodoc:
     def print_sprint_result args, result
         if result.respond_to? :duration
             rtt = pretty_print_duration result.duration
-            msg "#{yellow(result.region)}: Transaction time #{green(rtt)}"
+            msg "Transaction time #{green(rtt)}"
             puts
         end
         
@@ -105,17 +104,19 @@ class Curl < Command # :nodoc:
                     puts
                 end
 
-                puts "< " + res.line
-                res.headers.each_pair { |k, v| puts "< #{k}: #{v}\r\n" }
-                puts
-                content = res.content
-                if not content.empty?
-                    if /^[[:print:]]+$/ =~ content
-                        puts content
-                    else
-                        puts Hexy.new(content).to_s
+                if res
+                    puts "< " + res.line
+                    res.headers.each_pair { |k, v| puts "< #{k}: #{v}\r\n" }
+                    puts
+                    content = res.content
+                    if not content.empty?
+                        if /^[[:print:]]+$/ =~ content
+                            puts content
+                        else
+                            puts Hexy.new(content).to_s
+                        end
                     end
-                end                
+                end
             else
                 puts "> " + req.method + ' ' + req.url
                 if res
@@ -320,6 +321,15 @@ class Curl < Command # :nodoc:
 
                 if [ '-X', '--request' ].member? k
                     step['request'] = shift(k, argv)
+                    next
+                end
+                
+                if /-x:c/ =~ k or /--xtract:cookie/ =~ k
+                    xname = shift(k, argv)
+                    assert_match /^[a-zA-Z_][a-zA-Z_0-9]*$/, xname, "cookie name must be alphanumeric: #{xname}"
+                    
+                    step['xtracts'] ||= Hash.new
+                    xhash = step['xtracts'][xname] = { 'type' => 'cookie' }
                     next
                 end
             
