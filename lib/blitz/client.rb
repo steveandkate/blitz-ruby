@@ -18,6 +18,10 @@ class Client # :nodoc:
         JSON.parse blitz['/api/1/curl/execute'].post(data.to_json)
     end
     
+    def traceroute_execute data
+        JSON.parse blitz['/api/1/traceroute/execute'].post(data.to_json)
+    end
+    
     def login
         JSON.parse blitz['/login/api'].get
     end
