@@ -10,6 +10,8 @@ class Help < Command # :nodoc:
             { :cmd => 'couch:fuzz', :help => 'Auto generate blitz tests from CouchDB' },
             { :cmd => 'curl', :help => 'Run a sprint or a rush' },
             { :cmd => 'curl:help', :help => 'Show help on sprint and rushing' },
+            { :cmd => 'traceroute', :help => 'Run traceroute remotely' },
+            { :cmd => 'traceroute:help', :help => 'Show help on traceroute' },
             { :cmd => 'version', :help => 'Show the version of this Ruby gem' }
         ]
         

@@ -409,12 +409,6 @@ class Curl < Command # :nodoc:
 
         hash
     end
-
-    def shift key, argv
-        val = argv.shift
-        assert_not_nil(val, "missing value for #{key}")
-        val
-    end
 end # Curl
 end # Command
 end # Blitz

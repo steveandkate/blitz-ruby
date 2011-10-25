@@ -29,6 +29,12 @@ class Command # :nodoc:
     include Test::Unit::Assertions
     include Helper
     include Term::ANSIColor
+    
+    def shift key, argv
+        val = argv.shift
+        assert_not_nil(val, "missing value for #{key}")
+        val
+    end
 end
 end # Blitz
 
