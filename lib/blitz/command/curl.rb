@@ -205,7 +205,7 @@ class Curl < Command # :nodoc:
             { :short => '-h', :long => '--help', :value => '', :help => 'Help on command line options' },
             { :short => '-H', :long => '--header', :value => '<string>', :help => 'Custom header to pass to server' },
             { :short => '-p', :long => '--pattern', :value => '<s>-<e>:<d>', :help => 'Ramp from s to e concurrent requests in d secs' },
-            { :short => '-r', :long => '--region', :value => '<string>', :help => 'california|virginia|singapore|ireland|japan' },
+            { :short => '-r', :long => '--region', :value => '<string>', :help => 'california|oregon|virginia|singapore|ireland|japan' },
             { :short => '-s', :long => '--status', :value => '<number>', :help => 'Assert on the HTTP response status code' },
             { :short => '-T', :long => '--timeout', :value => '<ms>', :help => 'Wait time for both connect and responses' },
             { :short => '-u', :long => '--user', :value => '<user[:pass]>', :help => 'User and password for authentication' },
@@ -299,7 +299,7 @@ class Curl < Command # :nodoc:
 
                 if [ '-r', '--region' ].member? k
                     v = shift(k, argv)
-                    assert_match(/^california|virginia|singapore|ireland|japan$/, v, 'region must be one of california, virginia, singapore, japan or ireland')
+                    assert_match(/^california|oregon|virginia|singapore|ireland|japan$/, v, 'region must be one of california, oregon, virginia, singapore, japan or ireland')
                     hash['region'] = v
                     next
                 end

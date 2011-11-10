@@ -178,7 +178,7 @@ describe "parse_cli" do
         end
         
         it "should verify that it's a valid region" do
-            [ 'california', 'virginia', 'ireland', 'singapore', 'japan' ].each do |r|
+            [ 'california', 'oregon', 'virginia', 'ireland', 'singapore', 'japan' ].each do |r|
                 lambda { curl.parse ['-r', r, 'blitz.io' ] }.should_not raise_error
             end
                 
