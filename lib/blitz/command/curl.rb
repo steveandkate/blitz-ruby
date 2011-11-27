@@ -164,6 +164,7 @@ class Curl < Command # :nodoc:
         if last_index.nil?
             print yellow("%6s " % "Time")
             print "%6s " % "Users"
+            print green("%8s " % "Response")
             print green("%8s " % "Hits")
             print magenta("%8s " % "Timeouts")
             print red("%8s " % "Errors")
@@ -180,6 +181,7 @@ class Curl < Command # :nodoc:
         curr = result.timeline[-1]
         print yellow("%5.1fs " % curr.timestamp)
         print "%6d " % curr.volume
+        print green("%7.3fs " % curr.duration)
         print green("%8d " % curr.hits)
         print magenta("%8d " % curr.timeouts)
         print red("%8d " % curr.errors)
