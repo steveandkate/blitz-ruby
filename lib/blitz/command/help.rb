@@ -6,7 +6,8 @@ class Help < Command # :nodoc:
         msg "Usage: blitz <command> <options>"
         helps = [
             { :cmd => 'help', :help => "Display this help" },
-            { :cmd => 'api:init', :help => 'Validate your API key' },
+            { :cmd => 'account:about', :help => 'Show information about your account' },
+            { :cmd => 'api:init', :help => 'Validate and login with your API key' },
             { :cmd => 'couch:fuzz', :help => 'Auto generate blitz tests from CouchDB' },
             { :cmd => 'curl', :help => 'Run a sprint or a rush' },
             { :cmd => 'curl:help', :help => 'Show help on sprint and rushing' },

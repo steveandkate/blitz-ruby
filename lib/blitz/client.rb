@@ -14,16 +14,20 @@ class Client # :nodoc:
             }
     end
     
+    def login
+        JSON.parse blitz['/login/api'].get
+    end
+    
+    def account_about
+        JSON.parse blitz['/api/1/account/about'].get
+    end
+    
     def curl_execute data
         JSON.parse blitz['/api/1/curl/execute'].post(data.to_json)
     end
     
     def traceroute_execute data
         JSON.parse blitz['/api/1/traceroute/execute'].post(data.to_json)
-    end
-    
-    def login
-        JSON.parse blitz['/login/api'].get
     end
     
     def job_status job_id
