@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{blitz}
-  s.version = "0.1.18"
+  s.version = "0.1.19"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["pcapr"]
-  s.date = %q{2011-11-26}
+  s.date = %q{2011-11-29}
   s.default_executable = %q{blitz}
   s.description = %q{Make load and performance testing a fun sport}
   s.email = %q{support@blitz.io}
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
     "lib/blitz.rb",
     "lib/blitz/client.rb",
     "lib/blitz/command.rb",
+    "lib/blitz/command/account.rb",
     "lib/blitz/command/api.rb",
     "lib/blitz/command/couch.rb",
     "lib/blitz/command/curl.rb",
