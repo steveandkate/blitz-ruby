@@ -39,6 +39,6 @@ DEPENDENCIES
   json (~> 1.5.1)
   json_pure (~> 1.5.1)
   rest-client (~> 1.6.1)
-  rspec (= 2.6.0)
-  rspec-core (= 2.6.4)
+  rspec (~> 2.6)
+  rspec-core (~> 2.6)
   term-ansicolor (= 1.0.5)
