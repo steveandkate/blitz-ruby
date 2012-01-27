@@ -45,7 +45,7 @@ require 'blitz'
 ...
 
 result = Blitz::Curl.parse('-r california www.example.com').execute
-...
+```
 
 ### Rush
 
@@ -57,9 +57,6 @@ require 'blitz'
 result = Blitz::Curl.parse('-r california -p 10-50:30 www.example.com').execute do |partial|
     pp [ partial.region, partial.timeline.last.hits ]
 end
-...
-
-Blitz::Curl
 ```
 
 Copyright (c) 2011 Mu Dynamics. See LICENSE.txt for further details.
