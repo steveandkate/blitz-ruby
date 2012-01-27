@@ -10,7 +10,7 @@ class Curl
     RE_SQ_STRING = /^'[^'\\\r\n]*(?:\\.[^'\\\r\n]*)*'/.freeze
     
     def self.parse arguments
-        argv = arguments.is_a? Array ? argv : xargv(argv)
+        argv = arguments.is_a?(Array) ? arguments : xargv(arguments)
         args = parse_cli argv
         raise "help" if args['help'] 
         if not args['pattern']

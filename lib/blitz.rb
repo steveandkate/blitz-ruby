@@ -6,7 +6,7 @@ require 'pp'
 
 class Blitz # :nodoc:
     require 'blitz/helper'
-    Version = "0.1.20"
+    Version = "0.1.21"
         
     extend Blitz::Helper
     
