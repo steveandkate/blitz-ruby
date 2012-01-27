@@ -104,13 +104,7 @@ class Sprint
     # The primary method to execute a sprint from region. This method supports
     # all of the arguments that the blitz bar supports. For example:
     #
-    #  args = { 
-    #      :url => 'http://www.mudynamics.com',
-    #      :headers => [ 'X-API-Token: foo' ],
-    #      :region => 'california'
-    #  }
-    #
-    #  result = Blitz::Curl::Sprint.execute args
+    #  result = Blitz::Curl.parse('-r california www.example.com').execute
     def execute
         queue
         result

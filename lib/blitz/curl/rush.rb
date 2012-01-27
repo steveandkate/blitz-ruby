@@ -99,16 +99,7 @@ class Rush
     # the pattern. If a block is given, it's invoked periodically with the
     # partial results of the run (to report progress, perhaps)
     #
-    #  args = { 
-    #      :url => 'http://www.mudynamics.com',
-    #      :headers => [ 'X-API-Token: foo' ],
-    #      :region => 'california',
-    #      :pattern => {
-    #          :intervals => [{ :start => 1, :end => 10000, :duration => 60 }]
-    #      }
-    #  }
-    #
-    #  result = Blitz::Curl::Rush.execute args do |partial|
+    #  result = Blitz::Curl.parse('-r california -p 10-50:30 www.example.com').execute do |partial|
     #      pp [ partial.region, partial.timeline.last.hits ]
     #  end
     #
