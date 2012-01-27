@@ -1,5 +1,5 @@
 class Blitz
-module Curl # :nodoc:
+class Curl # :nodoc:
 # Use this to run a sprint against your app. The return values include the response
 # time, the region from which the sprint was run along with the full request
 # and response headers and the response body.
@@ -111,31 +111,33 @@ class Sprint
     #  }
     #
     #  result = Blitz::Curl::Sprint.execute args
-    def self.execute args
-        self.queue(args).result
+    def execute
+        queue
+        result
     end
     
-    def self.queue args # :nodoc:
+    def queue # :nodoc:
         args.delete 'pattern'
         args.delete :pattern
 
         res = Command::API.client.curl_execute args
         raise Error.new(res) if res['error']
-        return self.new res
+        @job_id = res['job_id']
+        @region = res['region']
     end
     
     attr_reader :job_id # :nodoc:
     attr_reader :region # :nodoc:
+    attr_reader :args # :nodoc:
     
-    def initialize json # :nodoc:
-        @job_id = json['job_id']
-        @region = json['region']
+    def initialize args # :nodoc:
+        @args = args
     end
     
     def result # :nodoc:
         while true
             sleep 2.0
-
+            
             job = Command::API.client.job_status job_id
             if job['error']
                 raise Error
@@ -170,7 +172,7 @@ class Sprint
     
     def abort # :nodoc:
         Command::API.client.abort_job job_id rescue nil
-    end    
+    end
 end
 end # Curl
 end # Blitz

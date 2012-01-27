@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'lib'))
 require 'rubygems'
 require 'bundler'
 begin
-  Bundler.setup(:default, :development)
+  Bundler.setup(:default, :development, :test)
 rescue Bundler::BundlerError => e
   $stderr.puts e.message
   $stderr.puts "Run `bundle install` to install missing gems"
@@ -32,11 +32,11 @@ Jeweler::Tasks.new do |gem|
 end
 Jeweler::RubygemsDotOrgTasks.new
 
+require 'rspec/core/rake_task'
 desc "Run all the specs"
-task :spec do
-    require 'rspec/core'
-    require 'blitz'
-    RSpec::Core::Runner.run [ *Dir.glob('spec/**/*.rb') ]
+RSpec::Core::RakeTask.new do |t|
+    t.pattern = ENV['file'] || 'spec/**/*_spec.rb'
+    t.rspec_opts = ["--color"]
 end
 
 task :default => :spec

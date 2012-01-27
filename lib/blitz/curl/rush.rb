@@ -1,5 +1,5 @@
 class Blitz
-module Curl # :nodoc:
+class Curl # :nodoc:
 # Use this to run a rush (a load test) against your app. The return values
 # include the entire timeline containing the average duration, the concurrency,
 # the bytes sent/received, etc.
@@ -108,32 +108,34 @@ class Rush
     #      }
     #  }
     #
-    #  result = Blitz::Curl::Sprint.execute args do |partial|
+    #  result = Blitz::Curl::Rush.execute args do |partial|
     #      pp [ partial.region, partial.timeline.last.hits ]
     #  end
     #
     # You can easily export the result to JSON, XML or compute the various 
     # rates, etc.
-    def self.execute args, &block # |result|
-        self.queue(args).result &block
+    def execute &block # |result|
+        queue
+        result &block
     end
     
-    def self.queue args # :nodoc:
+    def queue # :nodoc:
         if not args.member? 'pattern' and not args.member? :pattern
             raise ArgumentError, 'missing pattern'
         end
 
         res = Command::API.client.curl_execute args
         raise Error.new(res) if res['error']
-        return self.new res
+        @job_id = res['job_id']
+        @region = res['region']
     end
     
     attr_reader :job_id # :nodoc:
     attr_reader :region # :nodoc:
+    attr_reader :args # :nodoc:
     
-    def initialize json # :nodoc:
-        @job_id = json['job_id']
-        @region = json['region']
+    def initialize args # :nodoc:
+        @args = args
     end
     
     def result &block # :nodoc:
@@ -180,7 +182,7 @@ class Rush
     
     def abort! # :nodoc:
         Command::API.client.abort_job job_id rescue nil
-    end    
+    end   
 end
 end # Curl
 end # Blitz
