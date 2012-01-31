@@ -31,6 +31,7 @@ module Utils
     def shift key, argv
         val = argv.shift
         assert_not_nil(val, "missing value for #{key}")
+        assert_no_match(/^-.*$/, val, "missing value for #{key}")
         val
     end
 end

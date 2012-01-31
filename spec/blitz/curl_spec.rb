@@ -174,11 +174,12 @@ describe Blitz::Curl do
             end
 
             it "should verify that it's a valid region" do
-                [ 'california', 'oregon', 'virginia', 'ireland', 'singapore', 'japan' ].each do |r|
+                [ 'california', 'oregon', 'virginia', 'ireland', 'singapore', 'japan', 'saopaulo' ].each do |r|
                     lambda { Blitz::Curl.parse_cli ['-r', r, 'blitz.io' ] }.should_not raise_error
                 end
 
-                lambda { Blitz::Curl.parse_cli %w[-r a ] }.should raise_error(MiniTest::Assertion, /must be one of/)
+                lambda { Blitz::Curl.parse_cli %w[-r -a ] }.should raise_error(MiniTest::Assertion, /missing value/)
+                lambda { Blitz::Curl.parse_cli %w[-r --data ] }.should raise_error(MiniTest::Assertion, /missing value/)
             end
         end
 

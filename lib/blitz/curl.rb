@@ -110,10 +110,7 @@ class Curl
                 end
 
                 if [ '-r', '--region' ].member? k
-                    v = shift(k, argv)
-                    assert_match(/^california|oregon|virginia|singapore|ireland|japan$/, v, 
-                        'region must be one of california, oregon, virginia, singapore, japan or ireland')
-                    hash['region'] = v
+                    hash['region'] = shift(k, argv)
                     next
                 end
 
