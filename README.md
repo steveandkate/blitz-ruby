@@ -33,4 +33,30 @@ will generate tests like this:
 which you can simply copy/paste to the [blitz.io](http://blitz.io). Your
 CouchDB must be on the public cloud though.
 
+## Using blitz gem on your application
+
+You can integrate blitz gem to your application and run tests whenever you want.
+
+### Sprint
+
+```ruby
+require 'blitz'
+
+...
+
+result = Blitz::Curl.parse('-r california www.example.com').execute
+```
+
+### Rush
+
+```ruby
+require 'blitz'
+
+...
+
+result = Blitz::Curl.parse('-r california -p 10-50:30 www.example.com').execute do |partial|
+    pp [ partial.region, partial.timeline.last.hits ]
+end
+```
+
 Copyright (c) 2011 Mu Dynamics. See LICENSE.txt for further details.

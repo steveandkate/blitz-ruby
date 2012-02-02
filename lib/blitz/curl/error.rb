@@ -1,5 +1,5 @@
 class Blitz
-module Curl
+class Curl
 class Error < StandardError # :nodoc:
     def initialize json={}
         super json['reason'] || "Hmmm, something went wrong. Try again in a little bit?"
