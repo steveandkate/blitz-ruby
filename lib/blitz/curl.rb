@@ -71,7 +71,7 @@ class Curl
                 end
 
                 if [ '-D', '--dump-header' ].member? k
-                    hash['dump-header'] = shift(k, argv)
+                    hash['dump-header'] = argv[0]=="-" ?  argv.shift : shift(k, argv)
                     next
                 end
 

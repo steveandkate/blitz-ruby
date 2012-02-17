@@ -50,21 +50,25 @@ describe Blitz::Command::Curl do
     end
     
     context "#print_sprint_header_to_file" do
+        it "should warn user if it can not open the file" do
+            obj = Blitz::Command::Curl.new
+            File.should_receive(:open).with("path", "a").and_raise("No such file or directory - path")
+            obj.should_receive(:puts).with("\e[31mNo such file or directory - path\e[0m")
+            obj.send(:print_sprint_header_to_file, "path", "request")
+        end        
         it "should print request headers to file" do
-            myfile = StringIO.new
+            file = mock('file')
             request = mocked_sprint_request
             obj = Blitz::Command::Curl.new
-            obj.send(:print_sprint_header_to_file, myfile, request)
-            myfile.rewind
-            myfile.read.split("\n").sort.should == [
-                "", 
-                "GET / HTTP/1.1", 
-                "User-Agent: blitz.io; 5f691b@11.22.33.250", 
-                "Host: blitz.io", 
-                "X-Powered-By: blitz.io", 
-                "X-User-ID: 5f6938a60e", 
-                "X-User-IP: 44.55.66.250"
-            ].sort
+            File.should_receive(:open).with("path", "a").and_yield(file)
+            file.should_receive(:puts).with("")
+            file.should_receive(:puts).with("GET / HTTP/1.1")
+            file.should_receive(:puts).with("User-Agent: blitz.io; 5f691b@11.22.33.250")
+            file.should_receive(:puts).with("Host: blitz.io")
+            file.should_receive(:puts).with("X-Powered-By: blitz.io")
+            file.should_receive(:puts).with("X-User-ID: 5f6938a60e")
+            file.should_receive(:puts).with("X-User-IP: 44.55.66.250")
+            obj.send(:print_sprint_header_to_file, "path", request)
         end
     end
     
@@ -88,35 +92,9 @@ describe Blitz::Command::Curl do
                 obj.should_receive(:puts).with()
             }
         end
-        it "should warn user if the existen file is not writable" do
+        it "should prints header to file when path is not '-'" do
             check_print_sprint_header {|obj, myfile, path|
-                File.should_receive(:exists?).with(path).and_return(true)
-                File.should_receive(:writable?).with(path).and_return(false)
-                obj.should_receive(:puts).with("\e[31mExisten file it's not writable - #{path}\e[0m")
-            }
-        end
-        it "should write header to file for writable existen file" do
-            check_print_sprint_header {|obj, myfile, path|
-                File.should_receive(:exists?).with(path).and_return(true)
-                File.should_receive(:writable?).with(path).and_return(true)
-                File.should_receive(:open).with(path, "a").and_return(myfile)
                 obj.should_receive(:print_sprint_header_to_file).and_return(true)
-                myfile.should_receive(:close).and_return(true)
-            }
-        end
-        it "should warn user if it can not open the file" do
-            check_print_sprint_header {|obj, myfile, path|
-                File.should_receive(:exists?).with(path).and_return(false)
-                File.should_receive(:new).with(path, "w").and_raise("")
-                obj.should_receive(:puts).with("\e[31mNo such file or directory - #{path}\e[0m")
-            }
-        end
-        it "should write to file when opened new file successfully" do
-            check_print_sprint_header {|obj, myfile, path|
-                File.should_receive(:exists?).with(path).and_return(false)
-                File.should_receive(:new).with(path, "w").and_return(myfile)
-                obj.should_receive(:print_sprint_header_to_file).and_return(true)
-                myfile.should_receive(:close).and_return(true)
             }
         end
     end

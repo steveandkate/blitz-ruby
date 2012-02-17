@@ -29,13 +29,9 @@ module Utils
     include Test::Unit::Assertions
     def shift key, argv
         val = argv.shift
-        if [ '-D', '--dump-header' ].member? key and val == "-"
-            val
-        else
-            assert_not_nil(val, "missing value for #{key}")
-            assert_no_match(/^-.*$/, val, "missing value for #{key}")
-            val
-        end
+        assert_not_nil(val, "missing value for #{key}")
+        assert_no_match(/^-.*$/, val, "missing value for #{key}")
+        val
     end
 end
 end
