@@ -90,14 +90,14 @@ class Curl < Command # :nodoc:
         end
     end
     
-    def print_sprint_header obj, path, symbol
+    def print_sprint_header obj, path, symbol, mode
         if path == "-"
             puts symbol + obj.line
             obj.headers.each_pair { |k, v| puts "#{symbol}#{k}: #{v}\r\n" }
             puts
         else
             begin
-                File.open(path, 'a') do |myfile|
+                File.open(path, mode) do |myfile|
                     myfile.puts ""
                     myfile.puts obj.line
                     obj.headers.each_pair { |k, v| myfile.puts("#{k}: #{v}") }    
@@ -120,18 +120,18 @@ class Curl < Command # :nodoc:
             dump_header = args['dump-header']
             verbose  = args['verbose']
             if dump_header and verbose
-                print_sprint_header req, dump_header, "> "
+                print_sprint_header req, dump_header, "> ", 'w'
                 print_sprint_content req.content
                 if res
-                    print_sprint_header res, dump_header, "< "
+                    print_sprint_header res, dump_header, "< ", 'a'
                     print_sprint_content res.content
                 end
             elsif dump_header.nil? and verbose
                 print_sprint_content req.content
                 print_sprint_content res.content if res
             elsif dump_header and verbose.nil?
-                print_sprint_header req, dump_header, "> "
-                print_sprint_header res, dump_header, "< " if res
+                print_sprint_header req, dump_header, "> ", 'w'
+                print_sprint_header res, dump_header, "< ", 'a' if res
             else
                 puts "> " + req.method + ' ' + req.url
                 if res

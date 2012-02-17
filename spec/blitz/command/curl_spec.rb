@@ -54,12 +54,13 @@ describe Blitz::Command::Curl do
             myfile = StringIO.new
             request = mocked_sprint_request
             symbol = "> "
+            mode = 'w'
             obj = Blitz::Command::Curl.new
-            yield(obj, path)
-            obj.send(:print_sprint_header, request, path, symbol)
+            yield(obj, path, mode)
+            obj.send(:print_sprint_header, request, path, symbol, mode)
         end
         it "should prints header to console when path is '-'" do
-            check_print_sprint_header("-") {|obj, path|
+            check_print_sprint_header("-") {|obj, path, mode|
                 obj.should_receive(:puts).with("> GET / HTTP/1.1")
                 obj.should_receive(:puts).with("> User-Agent: blitz.io; 5f691b@11.22.33.250\r\n")
                 obj.should_receive(:puts).with("> Host: blitz.io\r\n")
@@ -70,15 +71,15 @@ describe Blitz::Command::Curl do
             }
         end
         it "should warn user if it can not open the file" do
-            check_print_sprint_header() {|obj, path|
-                File.should_receive(:open).with(path, "a").and_raise("No such file or directory - #{path}")
+            check_print_sprint_header() {|obj, path, mode|
+                File.should_receive(:open).with(path, mode).and_raise("No such file or directory - #{path}")
                 obj.should_receive(:puts).with("\e[31mNo such file or directory - #{path}\e[0m")
             }
         end
         it "should print request headers to file" do
-            check_print_sprint_header() {|obj, path|
+            check_print_sprint_header() {|obj, path, mode|
                 file = mock('file')
-                File.should_receive(:open).with(path, "a").and_yield(file)
+                File.should_receive(:open).with(path, mode).and_yield(file)
                 file.should_receive(:puts).with("")
                 file.should_receive(:puts).with("GET / HTTP/1.1")
                 file.should_receive(:puts).with("User-Agent: blitz.io; 5f691b@11.22.33.250")
