@@ -90,25 +90,21 @@ class Curl < Command # :nodoc:
         end
     end
     
-    def print_sprint_header_to_file path, obj
-        begin
-            File.open(path, 'a') do |myfile|
-                myfile.puts ""
-                myfile.puts obj.line
-                obj.headers.each_pair { |k, v| myfile.puts("#{k}: #{v}") }    
-            end
-        rescue Exception => e
-            msg "#{red(e.message)}"
-        end
-    end
-    
     def print_sprint_header obj, path, symbol
         if path == "-"
             puts symbol + obj.line
             obj.headers.each_pair { |k, v| puts "#{symbol}#{k}: #{v}\r\n" }
             puts
         else
-            print_sprint_header_to_file path, obj
+            begin
+                File.open(path, 'a') do |myfile|
+                    myfile.puts ""
+                    myfile.puts obj.line
+                    obj.headers.each_pair { |k, v| myfile.puts("#{k}: #{v}") }    
+                end
+            rescue Exception => e
+                msg "#{red(e.message)}"
+            end
         end
     end
 
@@ -123,17 +119,17 @@ class Curl < Command # :nodoc:
             req, res = step.request, step.response
             dump_header = args['dump-header']
             verbose  = args['verbose']
-            if not dump_header.nil? and not verbose.nil?
+            if dump_header and verbose
                 print_sprint_header req, dump_header, "> "
                 print_sprint_content req.content
                 if res
                     print_sprint_header res, dump_header, "< "
                     print_sprint_content res.content
                 end
-            elsif dump_header.nil? and not verbose.nil?
+            elsif dump_header.nil? and verbose
                 print_sprint_content req.content
                 print_sprint_content res.content if res
-            elsif not dump_header.nil? and verbose.nil?
+            elsif dump_header and verbose.nil?
                 print_sprint_header req, dump_header, "> "
                 print_sprint_header res, dump_header, "< " if res
             else
