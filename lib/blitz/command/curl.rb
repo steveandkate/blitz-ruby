@@ -78,6 +78,51 @@ class Curl < Command # :nodoc:
 			rtt = ("%.2f" % rtt) + ' sec';
 		end
     end
+    
+    def print_sprint_content content
+        if not content.empty?
+            if /^[[:print:]]+$/ =~ content
+                puts content
+            else
+                puts Hexy.new(content).to_s
+            end
+            puts
+        end
+    end
+    
+    def print_sprint_header_to_file myfile, obj
+        myfile.puts("")
+        myfile.puts(obj.line)
+        obj.headers.each_pair { |k, v| myfile.puts("#{k}: #{v}") }
+    end
+    
+    def print_sprint_header obj, path, symbol
+        if path == "-"
+            puts symbol + obj.line
+            obj.headers.each_pair { |k, v| puts "#{symbol}#{k}: #{v}\r\n" }
+            puts
+        else
+            if File.exists?(path)
+                if File.writable?(path)
+                    myfile = File.open(path, "a")
+                    print_sprint_header_to_file myfile, obj
+                    myfile.close
+                else
+                    txt = "Existen file it's not writable - #{path}"
+                    msg "#{red(txt)}"
+                end
+            else
+                myfile = File.new(path, "w") rescue nil
+                if myfile
+                    print_sprint_header_to_file myfile, obj
+                    myfile.close
+                else
+                    txt = "No such file or directory - #{path}"
+                    msg "#{red(txt)}"
+                end
+            end
+        end
+    end
 
     def print_sprint_result args, result
         if result.respond_to? :duration
@@ -88,34 +133,21 @@ class Curl < Command # :nodoc:
         
         result.steps.each do |step|
             req, res = step.request, step.response
-            if args['dump-header'] or args['verbose']
-                puts "> " + req.line
-                req.headers.each_pair { |k, v| puts "> #{k}: #{v}\r\n" }
-                puts
-
-                content = req.content
-                if not content.empty?
-                    if /^[[:print:]]+$/ =~ content
-                        puts content
-                    else
-                        puts Hexy.new(content).to_s
-                    end
-                    puts
-                end
-
+            _dh = args['dump-header']
+            _v  = args['verbose']
+            if !_dh.nil? and !_v.nil?
+                print_sprint_header req, _dh, "> "
+                print_sprint_content req.content
                 if res
-                    puts "< " + res.line
-                    res.headers.each_pair { |k, v| puts "< #{k}: #{v}\r\n" }
-                    puts
-                    content = res.content
-                    if not content.empty?
-                        if /^[[:print:]]+$/ =~ content
-                            puts content
-                        else
-                            puts Hexy.new(content).to_s
-                        end
-                    end
+                    print_sprint_header res, _dh, "< "
+                    print_sprint_content res.content
                 end
+            elsif _dh.nil? and !_v.nil?
+                print_sprint_content req.content
+                print_sprint_content res.content if res
+            elsif !_dh.nil? and _v.nil?
+                print_sprint_header req, _dh, "> "
+                print_sprint_header res, _dh, "< " if res
             else
                 puts "> " + req.method + ' ' + req.url
                 if res
