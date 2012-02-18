@@ -78,6 +78,35 @@ class Curl < Command # :nodoc:
 			rtt = ("%.2f" % rtt) + ' sec';
 		end
     end
+    
+    def print_sprint_content content
+        if not content.empty?
+            if /^[[:print:]]+$/ =~ content
+                puts content
+            else
+                puts Hexy.new(content).to_s
+            end
+            puts
+        end
+    end
+    
+    def print_sprint_header obj, path, symbol, mode
+        if path == "-"
+            puts symbol + obj.line
+            obj.headers.each_pair { |k, v| puts "#{symbol}#{k}: #{v}\r\n" }
+            puts
+        else
+            begin
+                File.open(path, mode) do |myfile|
+                    myfile.puts ""
+                    myfile.puts obj.line
+                    obj.headers.each_pair { |k, v| myfile.puts("#{k}: #{v}") }    
+                end
+            rescue Exception => e
+                msg "#{red(e.message)}"
+            end
+        end
+    end
 
     def print_sprint_result args, result
         if result.respond_to? :duration
@@ -88,34 +117,21 @@ class Curl < Command # :nodoc:
         
         result.steps.each do |step|
             req, res = step.request, step.response
-            if args['dump-header'] or args['verbose']
-                puts "> " + req.line
-                req.headers.each_pair { |k, v| puts "> #{k}: #{v}\r\n" }
-                puts
-
-                content = req.content
-                if not content.empty?
-                    if /^[[:print:]]+$/ =~ content
-                        puts content
-                    else
-                        puts Hexy.new(content).to_s
-                    end
-                    puts
-                end
-
+            dump_header = args['dump-header']
+            verbose  = args['verbose']
+            if dump_header and verbose
+                print_sprint_header req, dump_header, "> ", 'w'
+                print_sprint_content req.content
                 if res
-                    puts "< " + res.line
-                    res.headers.each_pair { |k, v| puts "< #{k}: #{v}\r\n" }
-                    puts
-                    content = res.content
-                    if not content.empty?
-                        if /^[[:print:]]+$/ =~ content
-                            puts content
-                        else
-                            puts Hexy.new(content).to_s
-                        end
-                    end
+                    print_sprint_header res, dump_header, "< ", 'a'
+                    print_sprint_content res.content
                 end
+            elsif dump_header.nil? and verbose
+                print_sprint_content req.content
+                print_sprint_content res.content if res
+            elsif dump_header and verbose.nil?
+                print_sprint_header req, dump_header, "> ", 'w'
+                print_sprint_header res, dump_header, "< ", 'a' if res
             else
                 puts "> " + req.method + ' ' + req.url
                 if res

@@ -27,7 +27,6 @@ end
 class Blitz
 module Utils
     include Test::Unit::Assertions
-
     def shift key, argv
         val = argv.shift
         assert_not_nil(val, "missing value for #{key}")
