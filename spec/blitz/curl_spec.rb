@@ -239,4 +239,35 @@ describe Blitz::Curl do
             end
         end
     end
+    
+    describe "xargv" do
+        context "without quotes" do
+            it "should break string into array" do
+                array = Blitz::Curl.xargv "-r california www.example.com"
+                array.size.should == 3
+                array.first.should == "-r"
+                array.last.should == "www.example.com"
+            end
+        end
+        
+        context "with double quotes" do
+            it "should break string into array" do
+                array = Blitz::Curl.xargv '-r california -d "a b c d" www.example.com'
+                array.size.should == 5
+                array.first.should == "-r"
+                array.last.should == "www.example.com"
+                array[3].should == "a b c d"
+            end
+        end
+
+        context "with single quotes" do
+            it "should break string into array" do
+                array = Blitz::Curl.xargv "-r california -d 'a b c d' www.example.com"
+                array.size.should == 5
+                array.first.should == "-r"
+                array.last.should == "www.example.com"
+                array[3].should == "a b c d"
+            end
+        end
+    end
 end
