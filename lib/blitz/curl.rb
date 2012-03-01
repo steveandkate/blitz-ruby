@@ -36,6 +36,7 @@ class Curl
     end
     
     def self.strip_quotes text
+        return text unless text.match RE_DQ_STRING or text.match RE_SQ_STRING
         text[1, (text.size - 2)]
     end
     
