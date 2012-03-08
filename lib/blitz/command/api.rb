@@ -48,7 +48,7 @@ class API < Command # :nodoc:
     end
     
     def ask_for_credentials
-        msg "Enter your blitz credentials."
+        msg "Enter your blitz credentials. You can find this in #{green('Settings/API Key')}."
         print "User-ID: "
         user = ask
         print "API-Key: "
