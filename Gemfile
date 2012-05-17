@@ -9,7 +9,7 @@ gem "json", "~> 1.5.1"
 gem "json_pure", "~> 1.5.1"
 gem "hexy", "~> 0.1.1"
 gem 'term-ansicolor', '1.0.5'
-gem 'rake', '0.9.0'
+gem 'rake', '~> 0.9.2'
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
